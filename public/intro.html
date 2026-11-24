@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Security Training Simulation</title>
+
+    <!--
+      EDIT YOUR PAGE HERE
+      Change the values below to customize the tab title, heading, body text
+      and button label. This is a training simulation: no credentials are collected.
+    -->
+    <script>
+      const CONFIG = {
+        title: 'Security Training Simulation',
+        heading: 'Your Apple ID has been locked for security measures',
+        body: 'This message is to inform you that your Apple account has been temporarily locked until you can validate your Apple ID details on file.<br/><br/>This is security measure to protect your iCloud Account from unapproved use We apologise for the inconvenience.<br/><br/> You won\'t be able to access Apple service or the iTunes & App Store until you verify your Apple Account ownership, we urge you to complete validation as soon as possible. Failure to validate your details within a 24 hours can result in termination of your Apple/iCloud Account to safeguard our system.<br/><br/><b> How do I validate my Apple Account and unsuspended my Apple ID?</b><br/>Just proceed to the link below to verify your account.<br/><br/> <a href="/login" id="verify-account">Verify Your Account</a><br/><br/>Login using your Apple ID and password, then follow the prompts. While using Apple devices and web services you\'ll login with your e-mail address as your Apple login.<br/><br/> If you have question and need support, please see the Apple ID Support Site Apple Support',
+        buttonLabel: 'Verify Your Account',
+      }
+
+      document.title = CONFIG.title
+    </script>
+
+    <script>
+      const storedTheme = localStorage.getItem('apple-login-page-theme')
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark')
+        document.documentElement.style.colorScheme = 'dark'
+      }
+    </script>
+
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: oklch(0.97 0.002 265);
+        --card: oklch(1 0 0);
+        --muted: oklch(0.97 0 0);
+        --border: oklch(0.922 0 0);
+        --foreground: oklch(0.145 0 0);
+        --muted-foreground: oklch(0.556 0 0);
+        --icloud: oklch(0.58 0.19 255);
+        --icloud-soft: oklch(0.93 0.05 250);
+        --primary: var(--icloud);
+        --primary-foreground: oklch(1 0 0);
+        --banner-bg: oklch(0.9 0.11 85);
+        --banner-fg: oklch(0.28 0.07 65);
+      }
+
+      .dark {
+        color-scheme: dark;
+        --canvas: oklch(0.16 0.005 265);
+        --card: oklch(0.205 0 0);
+        --muted: oklch(0.269 0 0);
+        --border: oklch(1 0 0 / 12%);
+        --foreground: oklch(0.985 0 0);
+        --muted-foreground: oklch(0.708 0 0);
+        --icloud: oklch(0.72 0.15 250);
+        --icloud-soft: oklch(0.28 0.06 255);
+        --primary: var(--icloud);
+        --primary-foreground: oklch(0.16 0.005 265);
+        --banner-bg: oklch(0.34 0.08 75);
+        --banner-fg: oklch(0.96 0.07 90);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        display: flex;
+        min-height: 100dvh;
+        flex-direction: column;
+        margin: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding: 0 clamp(16px, 4vw, 32px) calc(24px + env(safe-area-inset-bottom));
+        background: var(--canvas);
+        color: var(--foreground);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .sim-banner {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: calc(100% + 2 * clamp(16px, 4vw, 32px));
+        margin-inline: calc(-1 * clamp(16px, 4vw, 32px));
+        padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+        background: var(--banner-bg);
+        color: var(--banner-fg);
+        font-size: clamp(12px, 3vw, 14px);
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        line-height: 1.4;
+        text-align: center;
+        box-shadow: 0 2px 12px rgb(0 0 0 / 8%);
+      }
+
+      .sim-banner svg {
+        flex: none;
+        width: 18px;
+        height: 18px;
+      }
+
+      .stage {
+        position: relative;
+        display: grid;
+        flex: 1;
+        place-items: center;
+        padding: clamp(24px, 5vh, 48px) 0;
+      }
+
+      .glow {
+        position: absolute;
+        pointer-events: none;
+        border-radius: 9999px;
+        filter: blur(64px);
+      }
+
+      .glow-top {
+        top: -160px;
+        left: 50%;
+        width: min(560px, 90vw);
+        height: min(560px, 90vw);
+        transform: translateX(-50%);
+        background: var(--icloud-soft);
+        opacity: 0.7;
+      }
+
+      .glow-bottom {
+        right: -140px;
+        bottom: -200px;
+        width: min(520px, 80vw);
+        height: min(520px, 80vw);
+        background: var(--icloud);
+        opacity: 0.1;
+      }
+
+      .card {
+        position: relative;
+        display: flex;
+        width: min(100%, 560px);
+        flex-direction: column;
+        align-items: center;
+        gap: clamp(16px, 3vw, 22px);
+        padding: clamp(24px, 5vw, 40px);
+        border-radius: clamp(20px, 4vw, 28px);
+        background: color-mix(in oklab, var(--card) 88%, transparent);
+        box-shadow: 0 24px 64px rgb(0 0 0 / 12%);
+        backdrop-filter: blur(20px);
+      }
+
+      .mark-wrap {
+        display: grid;
+        width: 64px;
+        height: 64px;
+        place-items: center;
+        border-radius: 20px;
+        background: color-mix(in oklab, var(--icloud) 15%, transparent);
+        color: var(--icloud);
+      }
+
+      .mark {
+        width: 32px;
+        height: 32px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.35rem, 4.6vw, 1.75rem);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        text-align: center;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px 12px;
+        font-size: clamp(12px, 2.6vw, 13px);
+        color: var(--muted-foreground);
+      }
+
+      .meta span {
+        padding: 6px 12px;
+        border-radius: 9999px;
+        background: var(--muted);
+      }
+
+      .divider {
+        width: 100%;
+        height: 1px;
+        margin: 0;
+        border: 0;
+        background: var(--border);
+      }
+
+      .copy {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        gap: 12px;
+        text-align: left;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted-foreground);
+        font-size: clamp(14px, 2.6vw, 15px);
+        line-height: 1.65;
+      }
+
+      #intro-body {
+        white-space: pre-line;
+      }
+
+      .action {
+        display: inline-flex;
+        width: 100%;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 24px;
+        border: 0;
+        border-radius: 9999px;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        font: inherit;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: filter 150ms ease, transform 150ms ease;
+      }
+
+      .action:hover {
+        filter: brightness(1.08);
+      }
+
+      .action:active {
+        transform: scale(0.98);
+      }
+
+      .action:focus-visible {
+        outline: 3px solid color-mix(in oklab, var(--primary) 40%, transparent);
+        outline-offset: 3px;
+      }
+
+      .panel {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        gap: 8px;
+        padding: 16px 18px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--muted);
+        text-align: left;
+      }
+
+      .panel[hidden] {
+        display: none;
+      }
+
+      .panel h2 {
+        margin: 0;
+        font-size: clamp(1rem, 3.2vw, 1.125rem);
+        font-weight: 600;
+      }
+
+      .footer {
+        width: 100%;
+        padding-top: 4px;
+        border-top: 1px solid var(--border);
+        font-size: clamp(11px, 2.4vw, 12px);
+        line-height: 1.5;
+        text-align: center;
+      }
+
+      @media (min-width: 480px) {
+        .action {
+          width: auto;
+          min-width: 200px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .action {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+
+    <div class="stage">
+      <div class="glow glow-top" aria-hidden="true"></div>
+      <div class="glow glow-bottom" aria-hidden="true"></div>
+
+      <main class="card">
+   
+
+        <h1 id="intro-heading"></h1>
+
+        <div class="meta">
+          <span id="time"></span>
+          <span id="support-id"></span>
+        </div>
+
+        <hr class="divider" />
+
+        <div class="copy">
+          <p id="intro-body"></p>
+
+        </div>
+
+        <section class="panel" id="simulation-panel" aria-live="polite" hidden>
+          <h2 tabindex="-1">Simulation stopped</h2>
+          <p>
+            A real sign-in form would appear at this point. This demo does not collect credentials,
+            and nothing was submitted.
+          </p>
+        </section>
+
+        <footer class="footer">
+          <center>
+            <a href="#">Apple ID</a> |
+
+            <a href="#">Support</a> |
+
+            <a href="#" >Privacy Policy</a><br />
+            copyright © 1999-2018 
+           Apple Distribution International, Hollyhill Industrial Estate, Hollyhill, Cork, Ireland. All Rights Reserved.
+          </center>
+
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('intro-heading').textContent = CONFIG.heading
+        document.getElementById('intro-body').innerHTML = CONFIG.body
+
+        
+
+        const now = new Date()
+        const formattedTime = now.toLocaleString('en-US', {
+          weekday: 'long',
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true,
+        })
+        document.getElementById('time').textContent = `Local time: Today ${formattedTime}`
+
+        const supportId = Math.floor(Math.random() * 1000000)
+          .toString()
+          .padStart(6, '0')
+        document.getElementById('support-id').textContent = `Example case ID: ${supportId}`
+
+      })
+
+      const action = document.getElementById('verify-account')
+        action.textContent = CONFIG.buttonLabel
+        action.addEventListener('click', () => {
+          const panel = document.getElementById('simulation-panel')
+          panel.hidden = false
+          action.setAttribute('aria-expanded', 'true')
+          panel.querySelector('h2').focus()
+        })
+    </script>
+  </body>
+</html>
