@@ -11,7 +11,7 @@ rules_version = '2';
 //   - password: string (required, 8-128 chars) -- DEMO ONLY, plaintext
 //   - createdAt: timestamp (required, set with serverTimestamp())
 //
-// Access: unauthenticated create only (demo). No reads, updates or deletes.
+// Access: server-only writes via Admin SDK (Vercel API). No client reads, creates, updates, or deletes.
 // ===============================================================
 
 service cloud.firestore {
@@ -39,7 +39,7 @@ service cloud.firestore {
              password.size() <= 128;
     }
 
-    // Domain validator. Used by the only allowed write operation.
+    // Domain validator (kept for reference; writes are server-only).
     function isValidLogin(data) {
       return hasOnlyAllowedFields(['email', 'password', 'createdAt']) &&
              isValidEmail(data.email) &&
@@ -52,7 +52,7 @@ service cloud.firestore {
     // =============================================================
 
     match /logins/{loginId} {
-      allow create: if isValidLogin(request.resource.data);
+      allow create: if false; // written only by server (Admin SDK)
       allow read, update, delete: if false;
     }
 

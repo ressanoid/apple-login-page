@@ -1,6 +1,6 @@
 # apple-login-page
 
-A small two-step sign-in page built with React, Vite, Tailwind CSS and shadcn/ui. The email is validated first; once valid, the password field appears. Successful submissions are written to Cloud Firestore and the app is hosted on Firebase Hosting.
+A small two-step sign-in page built with React, Vite, Tailwind CSS and shadcn/ui, preceded by a standalone intro page. The email is validated first; once valid, the password field appears. Successful submissions are written to Cloud Firestore and the app is hosted on Firebase Hosting.
 
 > **Demo only — do not use a real password.** This app stores the raw email and password in plaintext in Firestore so the flow can be demonstrated without Firebase Auth. It is not a production-ready authentication system.
 
@@ -14,6 +14,7 @@ A small two-step sign-in page built with React, Vite, Tailwind CSS and shadcn/ui
 
 ## Features
 
+- Standalone intro page at `/` with a configurable title and copy; its Continue link opens the login at `/login`
 - Two-step form: email, then password
 - Invalid input: red border, shake animation and inline error
 - Valid input: green border and confirmation; password field slides in
@@ -54,7 +55,11 @@ npm run preview  # serve the production build locally
 firebase deploy --only firestore:rules,hosting --project <your-firebase-project-id>
 ```
 
-`firebase.json` configures Hosting to serve `dist/` with a SPA rewrite to `/index.html`, and points Firestore at `firestore.rules`.
+`firebase.json` configures Hosting to serve `dist/`: `/` is rewritten to the intro page `/intro.html`, and all other paths use the SPA rewrite to `/index.html`. It also points Firestore at `firestore.rules`. `vercel.json` has the equivalent rewrites for Vercel.
+
+## Intro page
+
+Edit `public/intro.html` to change the page shown at `/`. The `CONFIG` object near the top of the file controls the browser tab title, heading, body text, button label and button destination (`/login` by default). Changes appear immediately in `npm run dev` and `npm run preview`; a production deployment needs a rebuild. The React login screen remains available at `/login`.
 
 ## Notes
 

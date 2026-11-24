@@ -14,7 +14,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { useTheme } from '@/hooks/use-theme'
-import { saveLogin } from '@/lib/logins'
+import { checkSessionForEmail, login, logout } from '@/lib/session'
 import { cn } from '@/lib/utils'
 import appleMark from '../assets/apple.svg?raw'
 
@@ -52,12 +52,13 @@ export default function App() {
   const [emailError, setEmailError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [checkingEmail, setCheckingEmail] = useState(false)
   const [saveError, setSaveError] = useState('')
 
   const emailWrapper = useRef<HTMLDivElement>(null)
   const passwordWrapper = useRef<HTMLDivElement>(null)
 
-  function handleEmailContinue(event: FormEvent<HTMLFormElement>) {
+  async function handleEmailContinue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const result = emailSchema.safeParse(email.trim())
@@ -68,10 +69,27 @@ export default function App() {
       return
     }
 
-    setEmail(result.data)
+    const validEmail = result.data
+    setEmail(validEmail)
     setEmailState('valid')
     setEmailError('')
-    setStep('password')
+    setCheckingEmail(true)
+
+    try {
+      const authenticated = await checkSessionForEmail(validEmail)
+      if (authenticated) {
+        setStep('done')
+        return
+      }
+      setStep('password')
+    } catch (error) {
+      console.error('Failed to check session', error)
+      setEmailState('invalid')
+      setEmailError('Could not check your session. Please try again.')
+      shake(emailWrapper.current)
+    } finally {
+      setCheckingEmail(false)
+    }
   }
 
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
@@ -91,12 +109,14 @@ export default function App() {
     setSaveError('')
 
     try {
-      await saveLogin(email, password)
+      await login(email, password)
       setStep('done')
     } catch (error) {
       console.error('Failed to save login', error)
       setPasswordState('invalid')
-      setSaveError('Could not save your details. Please try again.')
+      setSaveError(
+        error instanceof Error ? error.message : 'Could not save your details. Please try again.',
+      )
       shake(passwordWrapper.current)
     } finally {
       setSaving(false)
@@ -104,6 +124,7 @@ export default function App() {
   }
 
   function startOver() {
+    void logout()
     setStep('email')
     setEmail('')
     setPassword('')
@@ -185,7 +206,7 @@ export default function App() {
                         autoFocus
                         placeholder="name@example.com"
                         value={email}
-                        disabled={step !== 'email' || saving}
+                        disabled={step !== 'email' || saving || checkingEmail}
                         aria-invalid={emailState === 'invalid'}
                         onChange={(event) => {
                           setEmail(event.target.value)
@@ -253,12 +274,13 @@ export default function App() {
                 <div className="flex flex-col gap-1">
                   <Button
                     type="submit"
-                    disabled={saving}
+                    disabled={saving || checkingEmail}
                     className="h-11 rounded-full text-[15px] font-medium"
                   >
-                    {saving ? (
+                    {saving || checkingEmail ? (
                       <>
-                        <Spinner data-icon="inline-start" /> Saving…
+                        <Spinner data-icon="inline-start" />{' '}
+                        {checkingEmail ? 'Checking…' : 'Saving…'}
                       </>
                     ) : step === 'email' ? (
                       <>
@@ -273,7 +295,7 @@ export default function App() {
                   <Button
                     type="button"
                     variant="ghost"
-                    disabled={saving}
+                    disabled={saving || checkingEmail}
                     className="h-10 rounded-full text-sm text-muted-foreground"
                   >
                     Sign with passkey <KeyRoundIcon data-icon="inline-start" />
@@ -284,7 +306,8 @@ export default function App() {
 
             {step !== 'done' && (
               <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
-                Demo only — credentials are stored in plaintext in Firestore.
+                Demo only — credentials are stored in plaintext in Firestore and a secure
+                session cookie is used to remember this email.
                 <br />
                 Do not use a real password.
               </p>
